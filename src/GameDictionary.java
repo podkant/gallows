@@ -1,5 +1,6 @@
 import java.io.*;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -9,35 +10,42 @@ public class GameDictionary {
     }
 
     private String inputUrl;
-    private String filePath;
+    private Path filePath;
+    private String fileName;
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+    public String getFileName() {
+        return fileName;
+    }
     public ArrayList<String> dictionary;
+
+    public void setFilePath(Path filePath) {
+        this.filePath = filePath;
+    }
+
+    public Path getFilePath() {
+        return filePath;
+    }
 
     public String getInputUrl() {
         return inputUrl;
     }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
     public void setInputUrl(String inputUrl) {
         this.inputUrl = inputUrl;
     }
 
-    public void createFileFromUrl(String URL, String filePath) {
+    public void createFileFromUrl() {
 
-        try (BufferedInputStream input = new BufferedInputStream(new URL(inputUrl).openStream());
-             FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
+        try (BufferedInputStream input = new BufferedInputStream(new URI(getInputUrl()).toURL().openStream());
+             FileOutputStream fileOutputStream = new FileOutputStream(filePath.toString())) {
             int bytesRead;
             byte[] dataBuffer = new byte[1024];
             while ((bytesRead = input.read(dataBuffer, 0, 1024)) != -1) {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
             }
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
 
@@ -56,7 +64,7 @@ public class GameDictionary {
                 }
             }
             if (normCheck){
-                normDictionary.add(word);
+                normDictionary.add(word.toLowerCase());
             }
         }
         return normDictionary;
@@ -73,11 +81,10 @@ public class GameDictionary {
         this.dictionary = normalizeDictionary(dictionary);
     }
 
-    public void createDictionaryFromFile(String filePath, Integer minWordLength) {
+    public void createDictionaryFromFile(Path filePath, Integer minWordLength) {
         ArrayList<String> dictionary = new ArrayList<>();
-        Path path = Path.of(filePath);
         try {
-            List<String> allLines = Files.readAllLines(path);
+            List<String> allLines = Files.readAllLines(filePath);
             for (String line : allLines
             ) {
                 if (line.length() >= minWordLength) {

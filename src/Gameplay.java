@@ -14,6 +14,8 @@ public class Gameplay {
     }
 
     public char[] currentProgress;
+    private final HashSet<Character> usedChars = new HashSet<>();
+
 
     public boolean initialization() throws IOException {
         boolean startGame;
@@ -61,11 +63,11 @@ public class Gameplay {
         char[] chars = string.toCharArray();
 
         for (char c : chars) {
-            if (!Character.isLetter(c)) {
-                return false;
+            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     public boolean isContains(String word, char letter) {
@@ -79,28 +81,40 @@ public class Gameplay {
         return false;
     }
 
+    public boolean isInputValid(String inputString) {
+        //Check: is current symbol latin letter?
+        if (inputString.length() != 1) {
+            System.out.println("Enter 1 letter");
+            return false;
+        } else if (!isAlpha(inputString)) {
+            System.out.println("Enter Latin letter");
+            return false;
+        } else
+            return true;
+    }
+
+    public boolean isNotDuplicated(char currentChar) {
+        //Check: is current letter was used early?
+        if (usedChars.contains(currentChar)) {
+            System.out.println("Symbol was checked already. Enter another letter");
+            return false;
+        } else {
+            usedChars.add(currentChar);
+            return true;
+        }
+    }
+
     public void checkLetter() {
-        String imputString;
+        String inputString;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
-            //Get string from console and check is it
-            // 1)one symbol 2)actual letter 3) wasn't checked already 4) is the letter included in the word?
+            //Get string from console and check is the letter included in the word?
             //Mistake count equal 6 because we have 6 gallows position
             System.out.println("Enter next letter");
-
             int mistakeCount = 0;
-            HashSet<Character> usedChars = new HashSet<>();
             while (mistakeCount < 6) {
-                imputString = reader.readLine();
-                if (imputString.length() != 1) {
-                    System.out.println("Enter 1 letter");
-                } else if (isAlpha(imputString)) {
-                    char currentChar = imputString.toCharArray()[0];
-                    if (usedChars.contains(currentChar)) {
-                        System.out.println("Symbol was checked already. Enter another letter");
-                        continue;
-                    } else {
-                        usedChars.add(currentChar);
-                    }
+                inputString = reader.readLine();
+                char currentChar = inputString.toLowerCase().toCharArray()[0];
+                if (isInputValid(inputString) && isNotDuplicated(currentChar)) {
                     if (isContains(hiddenWord, currentChar)) {
                         for (int i = 0; i < hiddenWord.length(); i++) {
                             if (hiddenWord.toCharArray()[i] == currentChar) {
@@ -113,8 +127,6 @@ public class Gameplay {
                         System.out.println(Status.getByVal(mistakeCount).getStatus());
                         mistakeCount++;
                     }
-                } else {
-                    System.out.println("Enter Latin letter");
                 }
                 if (!isContains(Arrays.toString(currentProgress), '_')) {
                     System.out.println("You won!");
@@ -122,11 +134,9 @@ public class Gameplay {
                 }
                 if (mistakeCount == 6) {
                     System.out.println("You lost");
-                    System.out.println("Hidden word was "+hiddenWord);
+                    System.out.println("Hidden word was " + getHiddenWord());
                 }
             }
-
-
         } catch (IOException e) {
             System.err.format("IOException: %s%n", e);
             throw new RuntimeException(e);
